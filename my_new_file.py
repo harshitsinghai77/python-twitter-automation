@@ -1,1 +1,0 @@
-print("Something just like this.")
