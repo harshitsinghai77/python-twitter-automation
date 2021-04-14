@@ -33,12 +33,12 @@ async def post(url, comment, session):
 
 def rebase_branch_with_master(branch_name):
     
-    branch="feature-branch"
+    # branch="feature-branch"
     master_branch="master"
 
     g = git.Git()
     g.fetch("origin", branch_name)
-    g.checkout(branch)
+    g.checkout(branch_name)
 
     g.fetch("origin", "master")
     g.rebase(f"origin/{master_branch}")
@@ -140,4 +140,4 @@ loop.close()
 # rebased = repo.git.rebase()
 # print(rebased)
 
-# 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
+# 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
