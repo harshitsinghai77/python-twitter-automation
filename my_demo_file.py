@@ -1,5 +1,6 @@
 import git
 
+branch="feature-branch-2"
 g = git.Git()
-g.fetch("origin", "gh-action-check-migration")
-g.checkout("gh-action-check-migration")
+g.fetch("origin", branch)
+g.checkout(branch)
