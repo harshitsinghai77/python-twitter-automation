@@ -1,5 +1,5 @@
 def main():
     """This is my new file"""
 
-    abc = "Hello world"
+    abc = "Blah blah blah"
     print(abc)
