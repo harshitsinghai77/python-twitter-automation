@@ -43,6 +43,11 @@ def rebase_branch_with_master(branch_name):
     g.fetch("origin", "master")
     g.rebase(f"origin/{master_branch}")
 
+def switch_to_original_branch():
+    default_branch = "feature-branch"
+
+    g = git.Git()
+    g.checkout(default_branch)
 
 async def main(pat: str):
     """pat: personal access token."""
@@ -98,7 +103,12 @@ async def main(pat: str):
 
         for pr in rebase_pr:
             print("Rebasing for pr ", pr)
-            rebase_branch_with_master(pr)
+            try:
+                rebase_branch_with_master(pr)
+            except:
+                print("Some error occured while rebasing ", pr)
+        
+        switch_to_original_branch()
         # # Loop through rebase_pr and for each pr, rebase the branch by commenting `/rebase`
         # for pr in rebase_pr:
         #     comment_url = (
