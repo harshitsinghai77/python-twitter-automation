@@ -139,5 +139,3 @@ loop.close()
 
 # rebased = repo.git.rebase()
 # print(rebased)
-
-# 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
