@@ -15,6 +15,10 @@ BASE_URL = "https://api.github.com"
 params = {"state": "open", "per_page": 100}
 headers = {"Accept": "application/vnd.github.v3+json"}
 
+g = git.Git()
+
+# set user config for git
+# git_set_user_config()
 
 async def fetch(url, session, branch_name=None):
     """Make a get request to the given url, return response and status."""
@@ -33,17 +37,11 @@ async def fetch(url, session, branch_name=None):
 
 def rebase_branch_with_master(branch_name):
     """Fetch the branch from origin, checkout the branch and rebase it with master."""
-    try:
-        g = git.Git()
-        g.fetch("origin", branch_name)
-        g.checkout(branch_name)
+    g.fetch("origin", branch_name)
+    g.checkout(branch_name)
 
-        g.fetch("origin", DEFAULT_MASTER_BRANCH)
-        g.rebase(f"origin/{DEFAULT_MASTER_BRANCH}")
-    except git.exc.GitError as e:
-        print("Some error occured while rebasing ", branch_name, e)
-    finally:
-        g.push(force=True)
+    g.fetch("origin", DEFAULT_MASTER_BRANCH)
+    g.rebase(f"origin/{DEFAULT_MASTER_BRANCH}")
 
 
 async def main(pat: str):
@@ -64,10 +62,9 @@ async def main(pat: str):
         if not all_pull_requests:
             return
 
-        print([pr["head"]["ref"] for pr in all_pull_requests])
         # get pull request number and name of the branch if the PR wants to commit to the `master` branch
         pull_requests = [(pr["number"], pr["head"]["ref"]) for pr in all_pull_requests if pr["base"]["ref"] == "master"]
-
+        
         # for every open pull request get the list of files_changed in the PR. This will be async task,
         # each task will be append to a list and run concurrently. If all awaitables are completed successfully,
         # the result is an aggregate list of returned values.
@@ -91,18 +88,20 @@ async def main(pat: str):
             for files in pr["files"]:
                 file_changed = files["filename"]
                 if file_changed.startswith(tuple(BASE_DIR)):
-                    print("branch_name for rebase", branch_name)
                     rebase_branch.add(branch_name)
                     break
         
         print(rebase_branch)
-        # set user config for git
-        # git_set_user_config()
-
+        
         # rebase `rebase_branch` with master.
-        # for branch_name in rebase_branch:
-        #     print("Rebasing for branch ", branch_name)
-        #     rebase_branch_with_master(branch_name=branch_name)
+        for branch_name in rebase_branch:
+            print("Rebasing for branch ", branch_name)
+            try:
+                rebase_branch_with_master(branch_name=branch_name)
+            except git.exc.GitError as e:
+                print("Some error occured while rebasing ", branch_name, e)
+            finally:
+                g.push(force=True)
 
 
 if __name__ == "__main__":
