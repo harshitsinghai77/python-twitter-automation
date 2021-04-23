@@ -9,9 +9,9 @@ DEFAULT_REPO = "python-twitter-automation"
 DEFAULT_MASTER_BRANCH = "master"
 SPOCK_EMAIL = "harshitsinghai77@gmail.com"
 SPOCK_NAME = "harshitsinghai77"
-BASE_DIR = "my_demo_file.py"
+BASE_DIR = ["my_demo_file.py"]
 
-BASE_URL = "https://api.github.com/"
+BASE_URL = "https://api.github.com"
 params = {"state": "open", "per_page": 100}
 headers = {"Accept": "application/vnd.github.v3+json"}
 
@@ -52,7 +52,7 @@ async def main(pat: str):
 
     async with aiohttp.ClientSession() as session:
         # get all open pull requests
-        all_pull_requests_url = BASE_URL + f"repos/{OWNER}/{DEFAULT_REPO}/pulls"
+        all_pull_requests_url = f"{BASE_URL}/repos/{OWNER}/{DEFAULT_REPO}/pulls"
         all_pull_requests, status = await fetch(
             url=all_pull_requests_url, session=session
         )
@@ -64,8 +64,9 @@ async def main(pat: str):
         if not all_pull_requests:
             return
 
-        # get pull request number and name of the branch
-        pull_requests = [(pr["number"], pr["head"]["ref"]) for pr in all_pull_requests]
+        print([pr["head"]["ref"] for pr in all_pull_requests])
+        # get pull request number and name of the branch if the PR wants to commit to the `master` branch
+        pull_requests = [(pr["number"], pr["head"]["ref"]) for pr in all_pull_requests if pr["base"]["ref"] == "master"]
 
         # for every open pull request get the list of files_changed in the PR. This will be async task,
         # each task will be append to a list and run concurrently. If all awaitables are completed successfully,
@@ -74,7 +75,7 @@ async def main(pat: str):
 
         for pr_number, branch_name in pull_requests:
             file_changed_url = (
-                BASE_URL + f"repos/{OWNER}/{DEFAULT_REPO}/pulls/{pr_number}/files"
+                f"{BASE_URL}/repos/{OWNER}/{DEFAULT_REPO}/pulls/{pr_number}/files"
             )
             task = asyncio.create_task(
                 fetch(url=file_changed_url, branch_name=branch_name, session=session)
@@ -83,17 +84,18 @@ async def main(pat: str):
 
         all_pr_files_changed = await asyncio.gather(*pull_request_files_changed_task)
 
-        # If the PR make any changes to the file inside BASE_DIR then add it the rebase_branch
+        # # If the PR make any changes to the file inside BASE_DIR then add it the rebase_branch
         rebase_branch = set()
         for pr in all_pr_files_changed:
             branch_name = pr["branch_name"]
             for files in pr["files"]:
                 file_changed = files["filename"]
-                if file_changed.startswith(BASE_DIR):
+                if file_changed.startswith(tuple(BASE_DIR)):
                     print("branch_name for rebase", branch_name)
                     rebase_branch.add(branch_name)
                     break
-
+        
+        print(rebase_branch)
         # set user config for git
         # git_set_user_config()
 
