@@ -101,6 +101,7 @@ async def main(pat: str):
             except git.exc.GitError as e:
                 print("Some error occured while rebasing ", branch_name, e)
             finally:
+                print("Pushing the changes forcefully")
                 g.push(force=True)
 
 
